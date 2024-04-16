@@ -1,6 +1,7 @@
 const sequelize = require('../utils/connection');
 const catchError = require('../utils/catchError');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
 const getAll = catchError(async(req, res) => {
     const results = await User.findAll();
@@ -38,22 +39,29 @@ const update = catchError(async(req, res) => {
 
 // const login = catchError(async(req, res) => {
 //     const { username, password } = req.body;
+
 //     try {
 //         const user = await User.findOne({
 //             where: {
 //                 username,
-//                 password
-//             }
-//     });
-//         if (user.length > 0) {
-//             return res.json(user[0])
-//         }else{
+//                 password,
+//             },
+//         });
+
+//         if (user) {
+//             const token = jwt.sign(
+// 				{user},
+// 				process.env.TOKEN_SECRET,
+// 				{ expiresIn: '1d' }
+// 		    )
+//             return res.json({user, token});
+//         } else {
 //             res.status(401).json({ message: 'Invalid Credentials' });
 //         }
 //     } catch (error) {
 //         console.error('SQL Query Error:', error);
 //         res.status(500).json({ message: 'Server Error' });
-//     }
+//   }
 // });
 
 const login = catchError(async (req, res) => {
@@ -63,9 +71,14 @@ const login = catchError(async (req, res) => {
     try {
         const user = await sequelize.query(query, { type: sequelize.QueryTypes.SELECT });
         
-        if (user.length > 0) {
-            return res.json(user[0])
-        }else{
+        if (user) {
+            const token = jwt.sign(
+				{user},
+				process.env.TOKEN_SECRET,
+				{ expiresIn: '1d' }
+		    )
+            return res.json({user, token});
+        } else {
             res.status(401).json({ message: 'Invalid Credentials' });
         }
     } catch (error) {
